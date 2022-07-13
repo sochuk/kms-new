@@ -1,0 +1,490 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Azia.master.cs" Inherits="KMS.Themes.Azia.AziaSite" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="~/favicon.png" rel="icon" type="image/png" />
+    <link href='//cloudflare.com' rel='dns-prefetch' />
+    <link href='//cdnjs.cloudflare.com' rel='dns-prefetch' />
+    <link href='//dnjs.cloudflare.com' rel='dns-prefetch' />
+    <link href='//ajax.googleapis.com' rel='dns-prefetch' />
+    <link href='//fonts.googleapis.com' rel='dns-prefetch' />
+    <link href='//fonts.gstatic.com' rel='dns-prefetch' />
+    <link href='//geobytes.com' rel='dns-prefetch' />
+    <link href='//gd.geobytes.com' rel='dns-prefetch' />
+    <asp:PlaceHolder runat="server">
+        <%: Styles.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() +"/css/iconpack") %>
+        <%: Styles.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() +"/css/light") %>      
+    </asp:PlaceHolder>
+    <title><%: Page.Title == "" ? Application.Name() : Page.Title %></title>
+    <style type="text/css">
+        a[href*="www.devexpress.com"], body > div:first-child[style*="padding"] {
+            display: none !important;
+        }
+    </style>
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" runat="server" />
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/themes/material/js/jquery") %> 
+    </asp:PlaceHolder>
+
+    <asp:ContentPlaceHolder ID="Header" runat="server"></asp:ContentPlaceHolder>
+</head>
+<body class="az-body az-body-sidebar az-body-dashboard-nine">  
+    <% string host = Request.Url.GetLeftPart(UriPartial.Authority) + (Request.ApplicationPath == "/" ? string.Empty : HttpContext.Current.Request.ApplicationPath); %>
+    <script>let host = "<%= host %>";</script>
+    <%: Scripts.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() + "/js/preloader") %>
+
+    <div class="az-sidebar az-sidebar-sticky az-sidebar-indigo-dark">
+        <div class="az-sidebar-header">
+            <a href="~/" runat="server" class="az-logo">k<span>m</span>s</a>
+        </div>
+        <div class="az-sidebar-loggedin">
+            <div class="az-img-user online">
+                <img src="<%: M_User.getPhoto() %>" alt="<%: M_User.getFullname() %>" class="user" data-initial="<%: M_User.getInitial() %>" />
+            </div>
+            <div class="media-body">
+                <h6><%: (HttpContext.Current.User.Identity.Get_Fullname()).ToTitleCase() %></h6>
+                <span><small><%: (HttpContext.Current.User.Identity.Get_GroupName()) %></small></span>
+            </div>
+        </div>
+        <div class="az-sidebar-body">
+            <ul class="nav">
+                <li class="nav-label">Main Menu</li>
+                <li class="nav-item active">
+                    <a href="~/" runat="server" class="nav-link position-relative">
+                        <i class="mdc-list-item__start-detail mdc-drawer-item-icon fa fa fa-tachometer-alt" aria-hidden="true"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <!-- nav-item -->
+                <li class="nav-item show">
+                    <a href="#" class="nav-link with-sub">
+                        <i class="mdc-list-item__start-detail mdc-drawer-item-icon fa fa-user-circle" aria-hidden="true"></i>
+                        My Account
+                    </a>
+                    <ul class="nav-sub">
+                        <li class="nav-sub-item">
+                            <a runat="server" href="~/account/profile" class="nav-sub-link">My Profile</a>
+                        </li>
+                        <li class="nav-sub-item">
+                            <a runat="server" href="~/account/changepassword" class="nav-sub-link">Change Password</a>
+                        </li>
+                    </ul>
+                </li>
+                <%                      
+                    foreach (DataRow row in menu_root.Rows)
+                    {
+                        string list = "";
+                        list += "<li class=\"nav-item\">";
+                        list += "<a title=\"" + row["module_name"].ToString() + "\" class=\"nav-link with-sub\" data-toggle=\"expansionPanel\" data-id=\"" + row["module_id"] + "\" data-target=\"menu" + row["module_id"] + "\" href=\"#\" runat=\"server\">";
+                        if (row["module_icon"] != null || row["module_icon"].ToString() != "")
+                        {
+                            list += "<i class=\"mdc-list-item__start-detail mdc-drawer-item-icon " + row["module_icon"].ToString() + "\"></i>";
+                        }
+                        list += "<span class=\"text-truncate\">" + row["module_name"].ToString() + "</span>";
+                        list += "</a>";
+                        list += "<ul class=\"nav-sub\" id=\"menu" + row["module_id"] + "\">";
+                        list += "<li class=\"nav-sub-item\">";
+
+                        var smenu = (from a in menu_sub.AsEnumerable() where a["module_root"].ToInteger() == (int)row["module_id"].ToInteger() select a).ToList();
+                        foreach (var sub_menu in smenu)
+                        {
+                            var s2menu = (from a in menu_sub.AsEnumerable()
+                                          where a["module_root"].ToInteger() == (int)sub_menu["module_id"].ToInteger()
+                                          select a).ToList();
+
+                            if (s2menu.Count == 0)
+                            {
+                                list += "<li class=\"nav-sub-item\">";
+                                list += "<a title=\"" + sub_menu["module_name"].ToString() + "\" data-id=\"" + sub_menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_menu["module_url"] + "\">";
+                                list += "<span class=\"text-truncate\">" + sub_menu["module_name"].ToString() + "</span>";
+                                list += "</a>";
+                                list += "</li>";
+                            }
+                            else
+                            {
+                                list += "<li class=\"nav-sub-item\">";
+                                list += "<a title=\"" + sub_menu["module_name"].ToString() + "\" data-id=\"" + sub_menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                if (sub_menu["module_icon"] != null || sub_menu["module_icon"].ToString() != "")
+                                {
+                                    if (sub_menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                }
+                                list += "<span class=\"text-truncate\">" + sub_menu["module_name"].ToString() + "</span>";
+                                list += "</a>";
+                                list += "<ul class=\"nav-sub\" id=\"menu" + sub_menu["module_id"] + "\">";
+                                list += "<li class=\"nav-sub-item\">";
+                                foreach (var sub_s2menu in s2menu)
+                                {
+                                    var s3menu = (from a in menu_sub.AsEnumerable()
+                                                  where a["module_root"].ToInteger() == (int)sub_s2menu["module_id"].ToInteger()
+                                                  select a).ToList();
+
+                                    if (s3menu.Count == 0)
+                                    {
+                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                        list += "<a title=\"" + sub_s2menu["module_name"].ToString() + "\" data-id=\"" + sub_s2menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s2menu["module_url"] + "\">";
+                                        list += "<span class=\"text-truncate\">" + sub_s2menu["module_name"].ToString() + "</span>";
+                                        list += "</a>";
+                                        list += "</li>";
+                                    }
+                                    else
+                                    {
+                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                        list += "<a title=\"" + sub_s2menu["module_name"].ToString() + "\" data-id=\"" + sub_s2menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_s2menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                        if (sub_s2menu["module_icon"] != null || sub_s2menu["module_icon"].ToString() != "")
+                                        {
+                                            if (sub_s2menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                        }
+                                        list += "<span class=\"text-truncate\">" + sub_s2menu["module_name"].ToString() + "</span>";
+                                        list += "</a>";
+                                        list += "<ul class=\"nav-sub\" id=\"menu" + sub_s2menu["module_id"] + "\">";
+                                        list += "<li class=\"nav-sub-item with-sub\">";
+                                        foreach (var sub_s3menu in s3menu)
+                                        {
+                                            var s4menu = (from a in menu_sub.AsEnumerable()
+                                                          where a["module_root"].ToInteger() == (int)sub_s3menu["module_id"].ToInteger()
+                                                          select a).ToList();
+
+                                            if (s4menu.Count == 0)
+                                            {
+                                                list += "<li class=\"nav-sub-item ml-2\">";
+                                                list += "<a title=\"" + sub_s3menu["module_name"].ToString() + "\" data-id=\"" + sub_s3menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s3menu["module_url"] + "\">";
+                                                list += "<span class=\"text-truncate\">" + sub_s3menu["module_name"].ToString() + "</span>";
+                                                list += "</a>";
+                                                list += "</li>";
+                                            }
+                                            else
+                                            {
+                                                list += "<li class=\"nav-sub-item with-sub\">";
+                                                list += "<a title=\"" + sub_s3menu["module_name"].ToString() + "\" data-id=\"" + sub_s3menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_s3menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                                if (sub_s3menu["module_icon"] != null || sub_s3menu["module_icon"].ToString() != "")
+                                                {
+                                                    if (sub_s3menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                                }
+                                                list += "<span class=\"text-truncate\">" + sub_s3menu["module_name"].ToString() + "</span>";
+                                                list += "</a>";
+                                                list += "<ul class=\"nva-sub\" id=\"menu" + sub_s3menu["module_id"] + "\">";
+                                                list += "<li class=\"nav-sub-item ml-2\">";
+                                                foreach (var sub_s4menu in s4menu)
+                                                {
+                                                    var s5menu = (from a in menu_sub.AsEnumerable()
+                                                                  where a["module_root"].ToInteger() == (int)sub_s4menu["module_id"].ToInteger()
+                                                                  select a).ToList();
+
+                                                    if (s5menu.Count == 0)
+                                                    {
+                                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                                        list += "<a title=\"" + sub_s4menu["module_name"].ToString() + "\" data-id=\"" + sub_s4menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s4menu["module_url"] + "\">";
+                                                        list += "<span class=\"text-truncate\">" + sub_s4menu["module_name"].ToString() + "</span>";
+                                                        list += "</a>";
+                                                        list += "</li>";
+                                                    }
+                                                    else
+                                                    {
+                                                        list += "<li class=\"nav-sub-item with-sub\">";
+                                                        list += "<a title=\"" + sub_s4menu["module_name"].ToString() + "\" data-id=\"" + sub_s4menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_s4menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                                        if (sub_s4menu["module_icon"] != null || sub_s4menu["module_icon"].ToString() != "")
+                                                        {
+                                                            if (sub_s4menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                                        }
+                                                        list += "<span class=\"text-truncate\">" + sub_s4menu["module_name"].ToString() + "</span>";
+                                                        list += "</a>";
+                                                        list += "<ul class=\"nav-sub\" id=\"menu" + sub_s4menu["module_id"] + "\">";
+                                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                                        foreach (var sub_s5menu in s5menu)
+                                                        {
+                                                            var s6menu = (from a in menu_sub.AsEnumerable()
+                                                                          where a["module_root"].ToInteger() == (int)sub_s5menu["module_id"].ToInteger()
+                                                                          select a).ToList();
+
+                                                            if (s6menu.Count == 0)
+                                                            {
+                                                                list += "<li class=\"nav-sub-item ml-2\">";
+                                                                list += "<a title=\"" + sub_s5menu["module_name"].ToString() + "\" data-id=\"" + sub_s5menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s5menu["module_url"] + "\">";
+                                                                list += "<span class=\"text-truncate\">" + sub_s5menu["module_name"].ToString() + "</span>";
+                                                                list += "</a>";
+                                                                list += "</li>";
+                                                            }
+                                                            else
+                                                            {
+                                                                list += "<li class=\"nav-sub-item with-sub\">";
+                                                                list += "<a title=\"" + sub_s5menu["module_name"].ToString() + "\" data-id=\"" + sub_s5menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_s5menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                                                if (sub_s5menu["module_icon"] != null || sub_s5menu["module_icon"].ToString() != "")
+                                                                {
+                                                                    if (sub_s5menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                                                }
+                                                                list += "<span class=\"text-truncate\">" + sub_s5menu["module_name"].ToString() + "</span>";
+                                                                list += "</a>";
+                                                                list += "<ul class=\"nav-sub\" id=\"menu" + sub_s4menu["module_id"] + "\">";
+                                                                list += "<li class=\"nav-sub-item ml-2\">";
+                                                                foreach (var sub_s6menu in s6menu)
+                                                                {
+                                                                    var s7menu = (from a in menu_sub.AsEnumerable()
+                                                                                  where a["module_root"].ToInteger() == (int)sub_s6menu["module_id"].ToInteger()
+                                                                                  select a).ToList();
+
+                                                                    if (s7menu.Count == 0)
+                                                                    {
+                                                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                                                        list += "<a title=\"" + sub_s6menu["module_name"].ToString() + "\" data-id=\"" + sub_s6menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s6menu["module_url"] + "\">";
+                                                                        list += "<span class=\"text-truncate\">" + sub_s6menu["module_name"].ToString() + "</span>";
+                                                                        list += "</a>";
+                                                                        list += "</li>";
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        list += "<li class=\"nav-sub-item with-sub\">";
+                                                                        list += "<a title=\"" + sub_s6menu["module_name"].ToString() + "\" data-id=\"" + sub_s6menu["module_id"] + "\" class=\"nav-sub-link with-sub\" data-toggle=\"expansionPanel\" data-target=\"menu" + sub_s6menu["module_id"] + "\" href=\"#\" runat=\"server\">";
+                                                                        if (sub_s6menu["module_icon"] != null || sub_s6menu["module_icon"].ToString() != "")
+                                                                        {
+                                                                            if (sub_s6menu["module_icon"].ToString().Trim() != "") list += "&nbsp;";
+                                                                        }
+                                                                        list += "<span class=\"text-truncate\">" + sub_s6menu["module_name"].ToString() + "</span>";
+                                                                        list += "</a>";
+                                                                        list += "<ul class=\"nav-sub\" id=\"menu" + sub_s6menu["module_id"] + "\">";
+                                                                        list += "<li class=\"nav-sub-item ml-2\">";
+                                                                        foreach (var sub_s7menu in s7menu)
+                                                                        {
+                                                                            list += "<li class=\"nav-sub-item ml-2\">";
+                                                                            list += "<a title=\"" + sub_s7menu["module_name"].ToString() + "\" data-id=\"" + sub_s7menu["module_id"] + "\" class=\"nav-sub-link\" href=\"" + host + sub_s7menu["module_url"] + "\">";
+                                                                            list += "<span class=\"text-truncate\">" + sub_s7menu["module_name"].ToString() + "</span>";
+                                                                            list += "</a>";
+                                                                            list += "</li>";
+                                                                        }
+                                                                        list += "</li>";
+                                                                        list += "</ul>";
+                                                                        list += "</li>";
+                                                                    }
+                                                                }
+                                                                list += "</li>";
+                                                                list += "</ul>";
+                                                                list += "</li>";
+                                                            }
+
+                                                        }
+                                                        list += "</li>";
+                                                        list += "</ul>";
+                                                        list += "</li>";
+                                                    }
+                                                }
+                                                list += "</li>";
+                                                list += "</ul>";
+                                                list += "</li>";
+                                            }
+
+                                        }
+                                        list += "</li>";
+                                        list += "</ul>";
+                                        list += "</li>";
+                                    }
+                                }
+                                list += "</li>";
+                                list += "</ul>";
+                                list += "</li>";
+                            }
+                        }
+                        list += "</li>";
+                        list += "</ul>";
+                        list += "</li>";
+                        Response.Write(list);
+                    }
+                %>
+            </ul>
+        </div>
+    </div>
+
+    <div class="az-content az-content-dashboard-nine">
+    
+        <div class="az-header az-header-dashboard-nine">
+            <div class="container-fluid">
+                <div class="az-header-left">
+                    <a href="#" id="azSidebarToggle" class="az-header-menu-icon"><span></span></a>
+                </div>
+                <!-- az-header-left -->
+                <div class="az-header-center">
+                    <form id="searchTCode" class="mb-0" autocomplete="off">
+                        <input type="text" class="form-control" placeholder="Search for anything..." />
+                    </form>
+                    <button class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <!-- az-header-center -->
+                <div class="az-header-right">
+                    <div class="az-header-message">
+                        <a href="~/account/lock.aspx" runat="server"><i class="mdi mdi-lock-outline text-primary"></i></a>
+                    </div>
+                    <div class="dropdown az-profile-menu">
+                        <a href="#" class="az-img-user">
+                            <img src="<%: M_User.getPhoto() %>" alt="<%: M_User.getFullname() %>" class="user" data-initial="<%: M_User.getInitial() %>" />
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="az-dropdown-header d-sm-none">
+                                <a href="#" class="az-header-arrow"><i class="icon ion-md-arrow-back"></i></a>
+                            </div>
+                            <div class="az-header-profile">
+                                <div class="az-img-user">
+                                    <img src="<%: M_User.getPhoto() %>" alt="<%: M_User.getFullname() %>" data-initial="<%: M_User.getInitial() %>" />
+                                </div>
+                                <!-- az-img-user -->
+                                <h6><%: (HttpContext.Current.User.Identity.Get_Fullname()).ToTitleCase() %></h6>
+                                <span><small><%: (HttpContext.Current.User.Identity.Get_GroupName()) %></small></span>
+                            </div>
+                            <!-- az-header-profile -->
+
+                            <a href="~/account/profile.aspx" runat="server" class="dropdown-item"><i class="mdi mdi-account-edit-outline text-primary"></i>My Profile</a>
+                            <a href="~/account/changepassword.aspx" runat="server" class="dropdown-item"><i class="mdi mdi-key-variant text-primary"></i>Change Password</a>
+                            <a href="~/account/lock.aspx" runat="server" class="dropdown-item"><i class="mdi mdi-lock-outline text-primary"></i>Lock Screen</a>
+                            <a href="~/account/setting.aspx" runat="server" class="dropdown-item d-none"><i class="mdi mdi-settings-outline text-primary"></i>Account Settings</a>
+                            <a href="~/account/logout.aspx" runat="server" class="dropdown-item"><i class="mdi mdi-logout-variant text-primary"></i>Sign Out</a>
+                        </div>
+                        <!-- dropdown-menu -->
+                    </div>
+                </div>
+                <!-- az-header-right -->
+            </div>
+            <!-- container -->
+        </div>
+
+        <%= Navigation_Breadcrumb %>
+
+        <div class="az-content-body w-100">
+            <form runat="server" autocomplete="off" class="needs-validation mb-0" novalidate="novalidate">
+                <main class="content-wrapper">
+                    <%: Scripts.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() +"/js/vendorbundle") %>
+                    <%: Scripts.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() +"/js/dxfunction") %>
+
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server">
+                    </asp:ContentPlaceHolder>
+
+                    <dx:ASPxPopupControl ID="DialogHystory" runat="server" ClientInstanceName="DialogHystory"
+                        Width="1024" Height="300" ClientSideEvents-PopUp="function(s,e){s.ShowAtPos(s.Left, 100); GridHystory.Refresh()}"
+                        Modal="True" PopupHorizontalAlign="WindowCenter" PopupVerticalAlign="BottomSides" AllowResize="true"
+                        CloseAction="CloseButton" CloseOnEscape="true" AllowDragging="true" PopupAnimationType="None"
+                        EnableViewState="false" AutoUpdatePosition="true" ShowFooter="true" FooterImage-AlternateText="FS"
+                        HeaderText="Data Hystory">
+                        <ContentCollection>
+                            <dx:PopupControlContentControl runat="server" SupportsDisabledAttribute="True">
+                                <dx:ASPxGridView runat="server" ID="GridHystory" ClientInstanceName="GridHystory"
+                                    AutoGenerateColumns="false" CssClass="w-100" KeyFieldName="log_id" SettingsPager-PageSize="25"
+                                    OnInit="GridHystory_Init">
+                                    <SettingsSearchPanel CustomEditorID="htSearch" />
+                                    <SettingsDataSecurity AllowInsert="false" AllowEdit="false" AllowDelete="false" />
+                                    <SettingsPager EnableAdaptivity="true" />
+                                    <SettingsBehavior AllowEllipsisInText="true" />
+                                    <SettingsDetail ShowDetailRow="true" />
+                                    <Toolbars>
+                                        <dx:GridViewToolbar>
+                                            <Items>
+                                                <dx:GridViewToolbarItem Command="Refresh" Name="Refresh" BeginGroup="true" Image-IconID="actions_refresh_16x16office2013" />
+                                                <dx:GridViewToolbarItem>
+                                                    <Template>
+                                                        <dx:ASPxButtonEdit ID="htSearch" runat="server" NullText="Search" Height="100%" />
+                                                    </Template>
+                                                </dx:GridViewToolbarItem>
+                                            </Items>
+                                        </dx:GridViewToolbar>
+                                    </Toolbars>
+                                    <Columns>
+                                        <dx:GridViewDataDateColumn FieldName="log_date" Caption="Date" Width="70" MaxWidth="70" Settings-AllowHeaderFilter="True" />
+                                        <dx:GridViewDataComboBoxColumn FieldName="log_type" Caption="Log Type" Width="100" MaxWidth="100" Settings-AllowHeaderFilter="True">
+                                            <PropertiesComboBox DisplayFormatString="{1}" ValueField="log_type" TextField="log_type_desc" />
+                                        </dx:GridViewDataComboBoxColumn>
+                                        <dx:GridViewDataComboBoxColumn FieldName="user_id" Caption="Log By" Width="75" MaxWidth="75" Settings-AllowHeaderFilter="True">
+                                            <PropertiesComboBox DisplayFormatString="{1}" ValueField="user_id" TextField="fullname" />
+                                        </dx:GridViewDataComboBoxColumn>
+                                        <dx:GridViewDataTextColumn FieldName="local_ip" Caption="Local IP" Width="70" MaxWidth="75" Settings-AllowHeaderFilter="True" />
+                                        <dx:GridViewDataTextColumn FieldName="remote_ip" Caption="Remote IP" Width="70" MaxWidth="75" Settings-AllowHeaderFilter="True" />
+                                        <dx:GridViewDataTextColumn FieldName="location" Caption="Location" Width="50" MaxWidth="50" Settings-AllowHeaderFilter="True" />
+                                    </Columns>
+                                    <Templates>
+                                        <DetailRow>
+                                            <dx:ASPxGridView ID="grid_detail" runat="server" AutoGenerateColumns="false" Width="100%"
+                                                OnBeforePerformDataSelect="grid_detail_BeforePerformDataSelect">
+                                                <Columns>
+                                                    <dx:GridViewDataTextColumn FieldName="Title" Caption="Title" Width="100" MaxWidth="100" />
+                                                    <dx:GridViewDataTextColumn FieldName="Data" Settings-AllowEllipsisInText="True" Caption="Data" />
+                                                </Columns>
+                                            </dx:ASPxGridView>
+                                        </DetailRow>
+                                    </Templates>
+                                </dx:ASPxGridView>
+                            </dx:PopupControlContentControl>
+                        </ContentCollection>
+                        <FooterTemplate>
+                            <table class="w-100">
+                                <tr>
+                                    <td class="d-flex justify-content-end p-2">
+                                        <dx:ASPxButton ID="CancelButton" runat="server" Text="Close" AutoPostBack="False"
+                                            ClientSideEvents-Click="function(s, e) { DialogHystory.Hide();  }" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </FooterTemplate>
+                    </dx:ASPxPopupControl>
+
+                    <asp:ScriptManager runat="server">
+                        <Scripts>
+                            <%--Framework Scripts--%>
+                            <asp:ScriptReference Name="MsAjaxBundle" />
+                            <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Content/js/WebForms/WebForms.js" />
+                            <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Content/js/WebForms/WebUIValidation.js" />
+                            <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Content/js/WebForms/MenuStandards.js" />
+                            <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Content/js/WebForms/GridView.js" />
+                            <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Content/js/WebForms/DetailsView.js" />
+                            <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Content/js/WebForms/TreeView.js" />
+                            <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Content/js/WebForms/WebParts.js" />
+                            <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Content/js/WebForms/Focus.js" />
+                            <asp:ScriptReference Name="WebFormsBundle" />
+                        </Scripts>
+                    </asp:ScriptManager>
+                </main>
+            </form>
+        </div>
+
+        <div class="az-footer p-3">
+            <div class="container-fluid pd-t-0-f ht-100p">
+                <div class="d-flex align-items-start">
+                    <img src="~/Content/images/kemendagri.png" width="20" class="mr-3 mt-2" runat="server" />
+                    <div class="media-body">
+                        <h6 class="mb-1">Copyright © 2020 Kemendagri Republik Indonesia.</h6>
+                        <p class="mb-0">All rights reserved. </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <%: Scripts.Render("~/themes/"+ HttpContext.Current.User.Identity.Get_Theme() +"/js/data") %>
+
+    <script type="text/javascript">
+        $('form#searchTCode').on('submit', function (e) {
+            e.preventDefault();
+            TCode.PerformCallback($(this).find('input').val());
+        });
+
+        $(document).ready(function () {
+            if (typeof (ASPxClientGridView) != 'undefined' && typeof (grid) != 'undefined') {
+                focusedGrid = grid;
+            }
+            if (typeof (ASPxClientGridView) != 'undefined' && typeof (grid) != 'undefined') {
+                AddKeyboardNavigationTo(grid);
+            }
+            if (typeof (ASPxClientGridView) != 'undefined' && typeof (detail_receive) != 'undefined') {
+                AddKeyboardNavigationTo(detail_receive);
+            }
+            addScrollBar();
+        });
+
+    </script>
+
+    <dx:ASPxCallback runat="server" ID="TCode" ClientInstanceName="TCode" OnCallback="TCode_Callback">
+        <ClientSideEvents CallbackComplete="OnCallbackComplete" />
+    </dx:ASPxCallback>
+
+    <asp:ContentPlaceHolder ID="Script" runat="server"></asp:ContentPlaceHolder>
+    <%: Scripts.Render("~/themes/material/js/signalr") %>
+    <script src="<%: host %>/signalr/hubs"></script>
+</body>
+</html>
